@@ -1,0 +1,60 @@
+<script>
+	<name>Filesize from a Saved Search</name>
+	<description>This script will return the filesize from the filetable for a search
+		0 - Native files only
+		1 - Image files only
+		2 - Native and image files
+	</description>
+	<category></category>
+	<input orientation="horizontal">
+		<search id="SavedSearch" name="Saved Search" />
+		<constant id="fileType" name="File Type" type="number">
+			<option>0</option>
+			<option>1</option>
+			<option>2</option>
+		</constant>
+	</input>
+	<display type="itemlist" />
+	<action returns="table" timeout="180"><![CDATA[
+
+	IF OBJECT_ID('tempSearchTable', 'U') IS NOT NULL
+	  DROP TABLE tempSearchTable
+
+	create table tempSearchTable (
+
+        [ArtifactID] int, [ControlNumber] VARCHAR(255)
+
+    )
+
+	
+	INSERT INTO tempSearchTable
+	select EDDSDBO.[Document].[ArtifactID], EDDSDBO.[Document].[ControlNumber]
+	#SavedSearch# 
+
+
+	IF #fileType# = 2
+
+		BEGIN
+
+			SELECT (sum(f.Size)/1024/1024) as [File Size (MB)]
+		  	FROM tempSearchTable as doc
+		  	inner join [File] as f
+		  	on doc.[ArtifactID] = f.[DocumentArtifactID]
+
+  		END
+
+  	ELSE
+  	
+  		BEGIN
+
+			SELECT (sum(f.Size)/1024/1024) as [File Size (MB)]
+		  	FROM tempSearchTable as doc
+		  	inner join [File] as f
+		  	on doc.[ArtifactID] = f.[DocumentArtifactID]
+		  	WHERE f.[Type] = #fileType#
+
+  		END
+
+  	DROP TABLE tempSearchTable
+	]]></action>
+</script>
